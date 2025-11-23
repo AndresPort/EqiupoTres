@@ -7,6 +7,6 @@
     android:updatePeriodMillis="86400000"
     android:previewImage="@drawable/assignment_24dp_e3e3e3_fill0_wght400_grad0_opsz24"
     android:initialLayout="@layout/inventory_widget"
-    android:resizeMode="none"
+    android:resizeMode="horizontal"
     android:widgetCategory="home_screen">
 </appwidget-provider>
