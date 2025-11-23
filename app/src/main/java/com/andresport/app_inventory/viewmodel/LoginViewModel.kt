@@ -4,8 +4,11 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.andresport.app_inventory.repository.AuthenticationRepository
 import com.andresport.app_inventory.utils.SessionManager
-
+import com.google.firebase.auth.FirebaseAuth
+import com.google.android.gms.tasks.Task
+import com.google.firebase.auth.AuthResult
 
 // PASO 1: Definir los posibles estados de autenticación con una Sealed Class.
 // Esto nos permite manejar todos los casos (logueado, no logueado, error) en un solo lugar.
@@ -17,19 +20,26 @@ sealed class AuthenticationState {
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val authRepository = AuthenticationRepository()
     private val sessionManager = SessionManager(application)
 
-    // PASO 2: Usar un único LiveData para manejar el estado.
+    // LiveData del estado de autenticación
     private val _authenticationState = MutableLiveData<AuthenticationState>()
     val authenticationState: LiveData<AuthenticationState> = _authenticationState
 
-    // LiveData para mensajes Toast, esto lo mantenemos igual.
+    // LiveData para mensajes tipo Toast
     private val _toastMessage = MutableLiveData<String>()
     val toastMessage: LiveData<String> = _toastMessage
 
-    /**
-     * Verifica si hay una sesión activa al iniciar la app.
-     */
+
+    fun login(email: String, password: String): Task<AuthResult> {
+        return authRepository.login(email, password)
+    }
+
+    fun register(email: String, password: String): Task<AuthResult> {
+        return authRepository.register(email, password)
+    }
+
     fun checkUserLoggedIn() {
         val token = sessionManager.fetchAuthToken()
         if (!token.isNullOrEmpty()) {
@@ -39,27 +49,18 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Se ejecuta cuando la autenticación biométrica es correcta.
-     */
     fun onAuthenticationSuccess() {
         sessionManager.saveAuthToken("user_logged_in")
         _authenticationState.value = AuthenticationState.AUTHENTICATED
     }
 
-    /**
-     * Se ejecuta al fallar la autenticación.
-     */
     fun onAuthenticationFailureOrError(message: String) {
-        // En lugar de cambiar el estado principal, solo mostramos un mensaje.
         _toastMessage.value = message
     }
 
-    /**
-     * Cierra la sesión del usuario. Esta función será llamada desde InventarioFragment.
-     */
     fun logout() {
-        sessionManager.clearAuthToken() // Asumiendo que SessionManager tiene esta función.
+        sessionManager.clearAuthToken()
         _authenticationState.value = AuthenticationState.UNAUTHENTICATED
     }
 }
+
