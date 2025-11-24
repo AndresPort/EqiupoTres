@@ -1,5 +1,8 @@
 package com.andresport.app_inventory.view
 
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
@@ -14,13 +17,16 @@ import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.andresport.app_inventory.R
+import com.andresport.app_inventory.utils.SessionManager
 import com.andresport.app_inventory.viewmodel.LoginViewModel
+import com.andresport.app_inventory.widget.InventoryWidgetProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
 class LoginFragment : Fragment() {
 
     private lateinit var viewModel: LoginViewModel
+    private lateinit var sessionManager: SessionManager
 
     private lateinit var emailEditText: TextInputEditText
     private lateinit var passwordEditText: TextInputEditText
@@ -38,10 +44,14 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // ViewModel
         viewModel = ViewModelProvider(this)[LoginViewModel::class.java]
+        sessionManager = SessionManager(requireContext())
 
-        // UI Components
+        if (sessionManager.fetchAuthToken() != null) {
+            navigateToHome()
+            return
+        }
+
         emailEditText = view.findViewById(R.id.emailEditText)
         passwordEditText = view.findViewById(R.id.passwordEditText)
         passwordInputLayout = view.findViewById(R.id.passwordInputLayout)
@@ -54,10 +64,6 @@ class LoginFragment : Fragment() {
         registerButton.setOnClickListener { registerUser() }
     }
 
-    // -------------------------
-    //   CONFIGURACIÓN GENERAL
-    // -------------------------
-
     private fun setupUI() {
         loginButton.isEnabled = false
         registerButton.isEnabled = false
@@ -68,10 +74,6 @@ class LoginFragment : Fragment() {
             validatePassword(it.toString())
         }
     }
-
-    // -------------------------
-    //   VALIDACIONES
-    // -------------------------
 
     private fun validatePassword(input: String) {
         when {
@@ -111,10 +113,6 @@ class LoginFragment : Fragment() {
         registerButton.setTypeface(null, style)
     }
 
-    // -------------------------
-    //   LOGIN
-    // -------------------------
-
     private fun loginUser() {
         val email = emailEditText.text.toString().trim()
         val password = passwordEditText.text.toString()
@@ -127,7 +125,7 @@ class LoginFragment : Fragment() {
         viewModel.login(email, password).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 Toast.makeText(requireContext(), "Login exitoso", Toast.LENGTH_SHORT).show()
-                navigateToHome()
+                handleLoginSuccess()
             } else {
                 val errorMessage = when (task.exception?.message) {
                     "The email address is badly formatted." -> "Formato de correo inválido"
@@ -139,10 +137,6 @@ class LoginFragment : Fragment() {
             }
         }
     }
-
-    // -------------------------
-    //   REGISTRO
-    // -------------------------
 
     private fun registerUser() {
         val email = emailEditText.text.toString().trim()
@@ -156,15 +150,54 @@ class LoginFragment : Fragment() {
         viewModel.register(email, password).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 Toast.makeText(requireContext(), "Registro exitoso", Toast.LENGTH_SHORT).show()
-                navigateToHome()
+                handleLoginSuccess()
             } else {
                 Toast.makeText(requireContext(), "Error en el registro", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
+    private fun handleLoginSuccess() {
+        viewModel.onAuthenticationSuccess()
+
+        val appWidgetId = activity?.intent?.getIntExtra(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            AppWidgetManager.INVALID_APPWIDGET_ID
+        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
+        val loginOrigin = activity?.intent?.getStringExtra(InventoryWidgetProvider.EXTRA_LOGIN_ORIGIN)
+
+        if (loginOrigin == InventoryWidgetProvider.ORIGIN_WIDGET_VISIBILITY && appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+            InventoryWidgetProvider.setBalanceVisibility(requireContext(), appWidgetId, true)
+        }
+
+        updateAllWidgets()
+        if (loginOrigin == InventoryWidgetProvider.ORIGIN_WIDGET_VISIBILITY) {
+            if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                InventoryWidgetProvider.requestWidgetUpdate(requireContext(), appWidgetId)
+            }
+            activity?.finish()
+            return
+        }
+
+        navigateToHome()
+    }
+
     private fun navigateToHome() {
         val action = LoginFragmentDirections.actionLoginFragmentToInventarioFragment()
         findNavController().navigate(action)
+    }
+
+    private fun updateAllWidgets() {
+        val context = context ?: return
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val componentName = ComponentName(context, InventoryWidgetProvider::class.java)
+        val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
+        if (appWidgetIds.isNotEmpty()) {
+            val intent = Intent(context, InventoryWidgetProvider::class.java).apply {
+                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds)
+            }
+            context.sendBroadcast(intent)
+        }
     }
 }

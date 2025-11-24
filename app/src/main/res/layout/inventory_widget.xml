@@ -7,6 +7,7 @@
     android:background="@drawable/widget_background"
     android:padding="16dp">
 
+    <!-- TOP LEFT: Logo and "Inventory" text -->
     <ImageView
         android:id="@+id/widget_logo"
         android:layout_width="48dp"
@@ -25,40 +26,54 @@
         android:textColor="#e7522e"
         android:textSize="18sp" />
 
-    <TextView
-        android:id="@+id/widget_question_label"
+    <!-- TOP RIGHT: Question and eye icon in a LinearLayout -->
+    <LinearLayout
+        android:id="@+id/question_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
-        android:text="@string/cu_nto_tengo_de_inventario"
-        android:textColor="@android:color/white"
-        android:textSize="14sp" />
-
-    <LinearLayout
-        android:id="@+id/widget_balance_layout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/widget_question_label"
-        android:layout_alignParentEnd="true"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/widget_balance_text"
+            android:id="@+id/widget_question_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="$ ****"
+            android:layout_marginEnd="8dp"
+            android:text="@string/cu_nto_tengo_de_inventario"
             android:textColor="@android:color/white"
-            android:textSize="20sp" />
+            android:textSize="14sp" />
 
         <ImageView
             android:id="@+id/widget_toggle_visibility"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:layout_gravity="center_vertical"
-            android:layout_marginStart="8dp"
             android:src="@drawable/ic_visibility" />
     </LinearLayout>
+
+    <!-- Balance text below the question/eye layout -->
+    <TextView
+        android:id="@+id/widget_balance_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/question_layout"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="4dp"
+        android:text="$ ****"
+        android:textColor="@android:color/white"
+        android:textSize="20sp" />
+
+
+    <!-- BOTTOM RIGHT: Manage text and settings icon -->
+    <ImageView
+        android:id="@+id/widget_settings_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="4dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:src="@drawable/ic_settings" />
 
     <TextView
         android:id="@+id/widget_manage_inventory_label"
@@ -70,14 +85,5 @@
         android:text="@string/gestionar_inventario"
         android:textColor="@android:color/white"
         android:textSize="14sp" />
-
-    <ImageView
-        android:id="@+id/widget_settings_icon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginStart="4dp"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:src="@drawable/ic_settings" />
 
 </RelativeLayout>
