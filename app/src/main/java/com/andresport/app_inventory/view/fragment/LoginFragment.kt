@@ -14,8 +14,6 @@ import com.andresport.app_inventory.R
 import com.andresport.app_inventory.databinding.FragmentLoginWindowBinding
 import com.andresport.app_inventory.viewmodel.AuthenticationState // Importamos la nueva Sealed Class
 import com.andresport.app_inventory.viewmodel.LoginViewModel
-import com.andresport.app_inventory.utils.BiometricUtils
-import com.andresport.app_inventory.utils.BiometricAuthCallback
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
