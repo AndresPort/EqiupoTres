@@ -1,20 +1,23 @@
 package com.andresport.app_inventory.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.andresport.app_inventory.data.AppDatabase
 import com.andresport.app_inventory.model.Product
-import kotlinx.coroutines.Dispatchers
+import com.andresport.app_inventory.repository.ProductRepository
 import kotlinx.coroutines.launch
 
-class AddProductViewModel(application: Application) : AndroidViewModel(application) {
+class AddProductViewModel : ViewModel() {
 
-    private val productDao = AppDatabase.getInstance(application).productDao()
+    private val repository = ProductRepository()
 
-    fun insertProduct(product: Product) {
-        viewModelScope.launch(Dispatchers.IO) {
-            productDao.insertProduct(product)
+    fun insertProduct(product: Product, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                repository.insertProduct(product)
+                onResult(true, null)
+            } catch (e: Exception) {
+                onResult(false, e.message)
+            }
         }
     }
 }

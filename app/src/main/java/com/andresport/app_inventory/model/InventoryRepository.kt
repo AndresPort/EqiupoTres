@@ -1,33 +1,63 @@
-package com.andresport.app_inventory.model
+package com.andresport.app_inventory.repository
 
-import android.content.Context
-import com.andresport.app_inventory.data.AppDatabase
-import com.andresport.app_inventory.data.ProductDao
+import com.andresport.app_inventory.model.Product
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
-/**
- * Repositorio que maneja las operaciones de datos para el inventario.
- * Actúa como la capa del Modelo en la arquitectura MVC.
- */
-class InventoryRepository(context: Context) {
+class ProductRepository {
 
-    private val productDao: ProductDao
+    private val firestore = FirebaseFirestore.getInstance()
+    private val productCollection = firestore.collection("products")
 
-    init {
-        // CORRECCIÓN: Usamos getInstance, que es el nombre correcto del método en AppDatabase.kt
-        val database = AppDatabase.getInstance(context)
-        productDao = database.productDao()
+    // ------------------------------------------
+    // INSERTAR PRODUCTO
+    // ------------------------------------------
+    suspend fun insertProduct(product: Product) {
+        productCollection
+            .document(product.productRef)
+            .set(product)
+            .await()
     }
 
-    /**
-     * Criterio 8: Calcula el valor total del inventario multiplicando el precio de cada producto
-     * por su cantidad y sumando los totales.
-     */
-    suspend fun getTotalInventoryValue(): Double {
-        val allProducts = productDao.getAllProducts() // Obtenemos todos los productos
-        var totalValue = 0.0
-        for (product in allProducts) {
-            totalValue += product.unitPrice * product.stock
-        }
-        return totalValue
+    // ------------------------------------------
+    // OBTENER TODOS LOS PRODUCTOS
+    // ------------------------------------------
+    suspend fun getAllProducts(): List<Product> {
+        return productCollection
+            .get()
+            .await()
+            .toObjects(Product::class.java)
+    }
+
+    // ------------------------------------------
+    // OBTENER PRODUCTO POR ID
+    // ------------------------------------------
+    suspend fun getProductById(productRef: String): Product? {
+        val snapshot = productCollection
+            .document(productRef)
+            .get()
+            .await()
+
+        return snapshot.toObject(Product::class.java)
+    }
+
+    // ------------------------------------------
+    // ACTUALIZAR PRODUCTO
+    // ------------------------------------------
+    suspend fun updateProduct(product: Product) {
+        productCollection
+            .document(product.productRef)
+            .set(product)
+            .await()
+    }
+
+    // ------------------------------------------
+    // ELIMINAR PRODUCTO
+    // ------------------------------------------
+    suspend fun deleteProduct(productRef: String) {
+        productCollection
+            .document(productRef)
+            .delete()
+            .await()
     }
 }
