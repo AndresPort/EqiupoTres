@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 // Importa tus clases de model y repository
 import com.andresport.app_inventory.model.Product
-import com.andresport.app_inventory.repository.ProductRepository
 import kotlinx.coroutines.launch
 
 // El ViewModel recibe el Repositorio como parámetro para poder pedirle datos.

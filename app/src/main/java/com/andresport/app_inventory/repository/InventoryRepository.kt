@@ -9,9 +9,7 @@ class ProductRepository {
     private val firestore = FirebaseFirestore.getInstance()
     private val productCollection = firestore.collection("products")
 
-    // ------------------------------------------
-    // INSERTAR PRODUCTO
-    // ------------------------------------------
+    // INSERTAR
     suspend fun insertProduct(product: Product) {
         productCollection
             .document(product.productRef)
@@ -19,9 +17,7 @@ class ProductRepository {
             .await()
     }
 
-    // ------------------------------------------
-    // OBTENER TODOS LOS PRODUCTOS
-    // ------------------------------------------
+    // OBTENER TODOS
     suspend fun getAllProducts(): List<Product> {
         return productCollection
             .get()
@@ -29,9 +25,7 @@ class ProductRepository {
             .toObjects(Product::class.java)
     }
 
-    // ------------------------------------------
-    // OBTENER PRODUCTO POR ID
-    // ------------------------------------------
+    // OBTENER UNO
     suspend fun getProductById(productRef: String): Product? {
         val snapshot = productCollection
             .document(productRef)
@@ -41,9 +35,7 @@ class ProductRepository {
         return snapshot.toObject(Product::class.java)
     }
 
-    // ------------------------------------------
-    // ACTUALIZAR PRODUCTO
-    // ------------------------------------------
+    // ACTUALIZAR
     suspend fun updateProduct(product: Product) {
         productCollection
             .document(product.productRef)
@@ -51,9 +43,7 @@ class ProductRepository {
             .await()
     }
 
-    // ------------------------------------------
-    // ELIMINAR PRODUCTO
-    // ------------------------------------------
+    // ELIMINAR
     suspend fun deleteProduct(productRef: String) {
         productCollection
             .document(productRef)
