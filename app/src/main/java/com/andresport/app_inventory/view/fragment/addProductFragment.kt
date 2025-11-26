@@ -7,35 +7,24 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.navigation.fragment.findNavController
 import com.andresport.app_inventory.R
+import com.andresport.app_inventory.model.Product
 import com.andresport.app_inventory.viewmodel.AddProductViewModel
-
+import com.google.android.material.textfield.TextInputEditText
 
 class addProductFragment : Fragment() {
 
-    companion object {
-        fun newInstance() = addProductFragment()
-    }
-
-    private lateinit var productRefTIET: com.google.android.material.textfield.TextInputEditText
-    private lateinit var productNameTIET: com.google.android.material.textfield.TextInputEditText
-    private lateinit var unitPriceTIET: com.google.android.material.textfield.TextInputEditText
-    private lateinit var stockTIET: com.google.android.material.textfield.TextInputEditText
+    private lateinit var productRefTIET: TextInputEditText
+    private lateinit var productNameTIET: TextInputEditText
+    private lateinit var unitPriceTIET: TextInputEditText
+    private lateinit var stockTIET: TextInputEditText
     private lateinit var saveBtn: android.widget.Button
-
-
     private lateinit var returnIc: ImageView
 
-    private val viewModel: AddProductViewModel by viewModels {
-        androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().application)
-    }
+    private val viewModel: AddProductViewModel by viewModels()
 
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-    }
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -47,22 +36,24 @@ class addProductFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         returnIc = view.findViewById(R.id.returnIc)
-        returnIc.setOnClickListener { returnInventoryPage() }
-
         productRefTIET = view.findViewById(R.id.productRefTIET)
         productNameTIET = view.findViewById(R.id.productNameTIET)
         unitPriceTIET = view.findViewById(R.id.unitPriceTIET)
         stockTIET = view.findViewById(R.id.stockTIET)
         saveBtn = view.findViewById(R.id.saveBtn)
 
-        // Habilitación del botón
+        returnIc.setOnClickListener {
+            returnInventoryPage()
+        }
+
+        // TextWatcher para habilitar botón
         val textWatcher = object : android.text.TextWatcher {
             override fun afterTextChanged(s: android.text.Editable?) {
-                val ref = productRefTIET.text.toString().trim()
-                val name = productNameTIET.text.toString().trim()
-                val price = unitPriceTIET.text.toString().trim()
-                val stock = stockTIET.text.toString().trim()
-                saveBtn.isEnabled = ref.isNotEmpty() && name.isNotEmpty() && price.isNotEmpty() && stock.isNotEmpty()
+                saveBtn.isEnabled =
+                    productRefTIET.text!!.isNotEmpty() &&
+                            productNameTIET.text!!.isNotEmpty() &&
+                            unitPriceTIET.text!!.isNotEmpty() &&
+                            stockTIET.text!!.isNotEmpty()
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -74,40 +65,39 @@ class addProductFragment : Fragment() {
         unitPriceTIET.addTextChangedListener(textWatcher)
         stockTIET.addTextChangedListener(textWatcher)
 
-        // Guardar producto
         saveBtn.setOnClickListener {
-            val ref = productRefTIET.text.toString().trim()
-            val name = productNameTIET.text.toString().trim()
-            val price = unitPriceTIET.text.toString()
-                .replace(".", "")
-                .replace(",", ".")
-                .toDoubleOrNull() ?: 0.0
-            val stock = stockTIET.text.toString().toLongOrNull() ?: 0L
-
-            val product = com.andresport.app_inventory.model.Product(
-                productRef = ref,
-                productName = name,
-                unitPrice = price,
-                stock = stock
-            )
-
-            viewModel.insertProduct(product)
-
-            // Mostrar confirmación
-            android.widget.Toast.makeText(
-                requireContext(),
-                "Producto guardado correctamente",
-                android.widget.Toast.LENGTH_SHORT
-            ).show()
-
-            // Navegar al fragmento de inventario
-            returnInventoryPage()
+            saveProduct()
         }
     }
 
+    private fun saveProduct() {
+        val ref = productRefTIET.text.toString().trim()
+        val name = productNameTIET.text.toString().trim()
+        val price = unitPriceTIET.text.toString()
+            .replace(".", "")
+            .replace(",", ".")
+            .toDoubleOrNull() ?: 0.0
+        val stock = stockTIET.text.toString().toLongOrNull() ?: 0L
 
+        val product = Product(
+            productRef = ref,
+            productName = name,
+            unitPrice = price,
+            stock = stock
+        )
 
-    fun returnInventoryPage(){
+        // Guardar con Firestore
+        viewModel.insertProduct(product) { success, errorMessage ->
+            if (success) {
+                Toast.makeText(requireContext(), "Producto guardado correctamente", Toast.LENGTH_SHORT).show()
+                returnInventoryPage()
+            } else {
+                Toast.makeText(requireContext(), "Error: $errorMessage", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun returnInventoryPage() {
         findNavController().navigate(R.id.action_addProductFragment_to_inventarioFragment)
     }
 }

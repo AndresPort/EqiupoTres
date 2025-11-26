@@ -13,7 +13,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.andresport.app_inventory.R
-import com.andresport.app_inventory.data.AppDatabase
 import com.andresport.app_inventory.repository.ProductRepository
 import com.andresport.app_inventory.view.adapter.ProductAdapter
 import com.andresport.app_inventory.viewmodel.AuthenticationState

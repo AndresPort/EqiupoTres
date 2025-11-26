@@ -14,7 +14,6 @@ import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.fragment.app.setFragmentResult
 import com.andresport.app_inventory.R
-import com.andresport.app_inventory.data.AppDatabase
 import com.andresport.app_inventory.repository.ProductRepository
 import com.andresport.app_inventory.viewmodel.EditProductViewModel
 import com.andresport.app_inventory.viewmodel.ViewModelFactory

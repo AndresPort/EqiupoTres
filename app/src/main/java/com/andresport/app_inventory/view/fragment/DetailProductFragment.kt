@@ -1,3 +1,5 @@
+
+/*
 package com.andresport.app_inventory.view.fragment
 
 import android.os.Bundle
@@ -11,7 +13,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.andresport.app_inventory.R
-import com.andresport.app_inventory.data.AppDatabase
 import com.andresport.app_inventory.databinding.FragmentProductDetailBinding
 import com.andresport.app_inventory.repository.ProductRepository
 import com.andresport.app_inventory.viewmodel.ProductViewModel
@@ -121,3 +122,5 @@ class DetailProductFragment : Fragment() {
         _binding = null
     }
 }
+
+ */
