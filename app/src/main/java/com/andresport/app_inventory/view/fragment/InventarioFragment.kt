@@ -68,8 +68,8 @@ class InventarioFragment : Fragment(R.layout.fragment_inventario) {
 
         val progressBar = view.findViewById<ProgressBar>(R.id.progressBar)
 
-        val dao = AppDatabase.getInstance(requireContext()).productDao()
-        val repository = ProductRepository(dao)
+        // Inicializar ProductRepository con Firebase
+        val repository = ProductRepository()
         val factory = ViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[ProductViewModel::class.java]
 

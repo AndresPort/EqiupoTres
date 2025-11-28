@@ -23,9 +23,7 @@ class EditProductFragment : Fragment(R.layout.fragment_edit_product) {
     private var productId: String? = null // variable local para guardar el ID del producto
     private val viewModel: EditProductViewModel by viewModels {
         ViewModelFactory(
-            ProductRepository(
-                AppDatabase.getInstance(requireContext()).productDao()
-            )
+            ProductRepository()
         )
     }
 

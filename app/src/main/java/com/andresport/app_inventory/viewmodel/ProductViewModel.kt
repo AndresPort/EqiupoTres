@@ -26,7 +26,8 @@ class ProductViewModel(private val repository: ProductRepository) : ViewModel() 
                     stock = e.stock
                 )
             }
-            _totalSum.value = entities.sumOf { it.total }
+            // Calcular el total sumando unitPrice * stock de cada producto
+            _totalSum.value = entities.sumOf { it.unitPrice * it.stock }
         }
     }
 
