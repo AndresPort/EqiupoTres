@@ -18,7 +18,7 @@ sealed class AuthenticationState {
     object UNAUTHENTICATED : AuthenticationState()
     data class AUTH_ERROR(val message: String) : AuthenticationState()
 }
-
+  
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     private val authRepository = AuthenticationRepository()
