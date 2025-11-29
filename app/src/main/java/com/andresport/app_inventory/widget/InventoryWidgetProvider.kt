@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import com.andresport.app_inventory.R
-import com.andresport.app_inventory.model.InventoryRepository
 import com.andresport.app_inventory.utils.SessionManager
 import com.andresport.app_inventory.view.MainActivity
 import kotlinx.coroutines.CoroutineScope
