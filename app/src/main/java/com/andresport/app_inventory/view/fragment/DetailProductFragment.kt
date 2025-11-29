@@ -16,7 +16,7 @@ import com.andresport.app_inventory.repository.ProductRepository
 import com.andresport.app_inventory.viewmodel.ProductViewModel
 import com.andresport.app_inventory.viewmodel.ViewModelFactory
 import kotlinx.coroutines.launch
-
+ 
 class DetailProductFragment : Fragment() {
     private var _binding: FragmentProductDetailBinding? = null
     private val binding get() = _binding!!
