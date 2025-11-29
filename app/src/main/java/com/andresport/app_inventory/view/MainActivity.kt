@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.andresport.app_inventory.R
 import com.google.firebase.FirebaseApp
 
-
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
