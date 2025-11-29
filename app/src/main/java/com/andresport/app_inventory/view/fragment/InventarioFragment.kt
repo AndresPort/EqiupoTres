@@ -4,22 +4,39 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar // -> IMPORTACIÓN AÑADIDA
+import android.widget.Toast // -> IMPORTACIÓN AÑADIDA
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResultListener // -> IMPORTACIÓN AÑADIDA
+import androidx.lifecycle.ViewModelProvider // -> IMPORTACIÓN AÑADIDA
+import androidx.lifecycle.lifecycleScope // -> IMPORTACIÓN AÑADIDA
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager // -> IMPORTACIÓN AÑADIDA
+import androidx.recyclerview.widget.RecyclerView // -> IMPORTACIÓN AÑADIDA
 import com.andresport.app_inventory.R
+// Asegúrate de que las siguientes rutas de importación coincidan con la estructura de tu proyecto
+import com.andresport.app_inventory.repository.ProductRepository
 import com.andresport.app_inventory.databinding.FragmentInventarioBinding
 import com.andresport.app_inventory.util.EventObserver
+import com.andresport.app_inventory.view.adapter.ProductAdapter
 import com.andresport.app_inventory.viewmodel.AuthenticationState
 import com.andresport.app_inventory.viewmodel.LoginViewModel
+import com.andresport.app_inventory.viewmodel.ProductViewModel
+import com.andresport.app_inventory.viewmodel.ViewModelFactory
+import com.google.android.material.floatingactionbutton.FloatingActionButton // -> IMPORTACIÓN AÑADIDA
+import kotlinx.coroutines.launch // -> IMPORTACIÓN AÑADIDA
 
 class InventarioFragment : Fragment() {
 
     private var _binding: FragmentInventarioBinding? = null
     private val binding get() = _binding!!
 
-    // Usamos activityViewModels para compartir el ViewModel con la Activity y otros fragments.
     private val loginViewModel: LoginViewModel by activityViewModels()
+
+    // --- DECLARACIÓN DE VARIABLES FALTANTES ---
+    private lateinit var adapter: ProductAdapter
+    private lateinit var viewModel: ProductViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -32,30 +49,18 @@ class InventarioFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Observamos el LiveData de navegación con nuestro EventObserver.
-        // Esto garantiza que la navegación se dispare solo una vez.
         loginViewModel.navigationToLoginState.observe(viewLifecycleOwner, EventObserver { state ->
             if (state is AuthenticationState.UNAUTHENTICATED) {
-                // Navegamos al LoginFragment si el usuario no está autenticado.
-                // Asegúrate de que el ID de la acción en tu nav_graph.xml sea correcto.
                 findNavController().navigate(R.id.action_inventarioFragment_to_LoginFragment)
             }
         })
 
-        // --- SOLUCIÓN APLICADA AQUÍ ---
-        // El ícono de logout está en un menú dentro de la Toolbar, no es una vista directa.
-        // Por lo tanto, configuramos un listener en la Toolbar para capturar los clics en sus ítems.
         binding.toolbarInventario.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                // Comparamos el ID del ítem presionado con el ID del ítem de logout en tu archivo de menú.
-                // Reemplaza 'action_logout' si tu ID es diferente en el XML del menú.
                 R.id.action_logout -> {
-                    // Si es el ítem correcto, llamamos a la función de logout.
                     loginViewModel.logout()
-                    // Devolvemos 'true' para indicar que hemos manejado el evento.
                     true
                 }
-                // Para cualquier otro ítem del menú, no hacemos nada.
                 else -> false
             }
         }
@@ -70,27 +75,31 @@ class InventarioFragment : Fragment() {
             val bundle = Bundle().apply {
                 putString("productRef", selectedProduct.productRef)
             }
-            findNavController().navigate(R.id.action_inventarioFragment_to_detailProductFragment, bundle)
+            findNavController().navigate(
+                R.id.action_inventarioFragment_to_detailProductFragment,
+                bundle
+            )
         }
 
-        val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerViewProducts)
+        // Es mejor usar 'binding' para acceder a las vistas si tienes View Binding habilitado
+        val recyclerView = binding.recyclerViewProducts
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
 
-        val fabAddProduct = view.findViewById<FloatingActionButton>(R.id.fabAddProduct)
+        val fabAddProduct = binding.fabAddProduct
         fabAddProduct.setOnClickListener {
             openAddProductFragment()
         }
 
-        val progressBar = view.findViewById<ProgressBar>(R.id.progressBar)
+        val progressBar = binding.progressBar
 
-        // Inicializar ProductRepository con Firebase
         val repository = ProductRepository()
         val factory = ViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[ProductViewModel::class.java]
 
         progressBar.visibility = View.VISIBLE
         viewModel.products.observe(viewLifecycleOwner) { products ->
+            // Asumiendo que tu adapter tiene un método setProducts o similar para actualizar la lista
             adapter.setProducts(products)
             progressBar.visibility = View.GONE
         }
@@ -112,5 +121,11 @@ class InventarioFragment : Fragment() {
 
     private fun openAddProductFragment() {
         findNavController().navigate(R.id.action_inventarioFragment_to_addProductFragment)
+    }
+
+    // --- CORRECCIÓN DE FUGA DE MEMORIA ---
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null // Limpia la referencia al binding para evitar memory leaks
     }
 }
