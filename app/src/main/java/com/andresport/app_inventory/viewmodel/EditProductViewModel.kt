@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 // Importa tus clases de model y repository
+import com.andresport.app_inventory.repository.ProductRepository
 import com.andresport.app_inventory.model.Product
 import kotlinx.coroutines.launch
 
