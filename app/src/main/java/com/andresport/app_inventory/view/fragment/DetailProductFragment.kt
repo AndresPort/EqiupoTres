@@ -1,5 +1,3 @@
-
-/*
 package com.andresport.app_inventory.view.fragment
 
 import android.os.Bundle
@@ -38,8 +36,8 @@ class DetailProductFragment : Fragment() {
             findNavController().popBackStack()
         }
 
-        val dao = AppDatabase.getInstance(requireContext()).productDao()
-        val repository = ProductRepository(dao)
+        // Inicializar ProductRepository con Firebase (sin necesidad de DAO)
+        val repository = ProductRepository()
         viewModel = ViewModelProvider(
             this,
             ViewModelFactory(repository)
@@ -58,7 +56,9 @@ class DetailProductFragment : Fragment() {
                 binding.txtProductName.text = product.productName
                 binding.txtUnitPrice.text = String.format("$ %,.2f", product.unitPrice)
                 binding.txtStock.text = product.stock.toString()
-                binding.txtTotal.text = String.format("$ %,.2f", product.total)
+                // Calcular el total multiplicando precio por stock
+                val total = product.unitPrice * product.stock
+                binding.txtTotal.text = String.format("$ %,.2f", total)
             }
         }
 
@@ -122,5 +122,3 @@ class DetailProductFragment : Fragment() {
         _binding = null
     }
 }
-
- */
