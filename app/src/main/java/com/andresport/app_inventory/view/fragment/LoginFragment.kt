@@ -14,10 +14,11 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.andresport.app_inventory.R
-import com.andresport.app_inventory.utils.SessionManager
+// ¡ESTA ES LA IMPORTACIÓN QUE FALTABA!
+import com.andresport.app_inventory.view.fragment.LoginFragmentDirections
 import com.andresport.app_inventory.viewmodel.LoginViewModel
 import com.andresport.app_inventory.widget.InventoryWidgetProvider
 import com.google.android.material.textfield.TextInputEditText
@@ -25,8 +26,8 @@ import com.google.android.material.textfield.TextInputLayout
 
 class LoginFragment : Fragment() {
 
-    private lateinit var viewModel: LoginViewModel
-    private lateinit var sessionManager: SessionManager
+    // CAMBIO 2: Usar el ViewModel de la actividad
+    private val viewModel: LoginViewModel by activityViewModels()
 
     private lateinit var emailEditText: TextInputEditText
     private lateinit var passwordEditText: TextInputEditText
@@ -44,13 +45,8 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel = ViewModelProvider(this)[LoginViewModel::class.java]
-        sessionManager = SessionManager(requireContext())
-
-        if (sessionManager.fetchAuthToken() != null) {
-            navigateToHome()
-            return
-        }
+        // CAMBIO 3: Eliminar la lógica duplicada de SessionManager
+        // El ViewModel y el fragmento de inicio se encargarán de la navegación automática.
 
         emailEditText = view.findViewById(R.id.emailEditText)
         passwordEditText = view.findViewById(R.id.passwordEditText)
@@ -65,6 +61,7 @@ class LoginFragment : Fragment() {
     }
 
     private fun setupUI() {
+        // ... (El resto de tu código no necesita cambios)
         loginButton.isEnabled = false
         registerButton.isEnabled = false
 
@@ -162,36 +159,23 @@ class LoginFragment : Fragment() {
     }
 
     private fun handleLoginSuccess() {
+        // CAMBIO 4: Esta llamada ahora actualizará el estado del ViewModel compartido
         viewModel.onAuthenticationSuccess()
 
-        val appWidgetId = activity?.intent?.getIntExtra(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID
-        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
-        val loginOrigin = activity?.intent?.getStringExtra(InventoryWidgetProvider.Companion.EXTRA_LOGIN_ORIGIN)
-
-        if (loginOrigin == InventoryWidgetProvider.Companion.ORIGIN_WIDGET_VISIBILITY && appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-            InventoryWidgetProvider.Companion.setBalanceVisibility(requireContext(), appWidgetId, true)
-        }
-
         updateAllWidgets()
-        if (loginOrigin == InventoryWidgetProvider.Companion.ORIGIN_WIDGET_VISIBILITY) {
-            if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                InventoryWidgetProvider.Companion.requestWidgetUpdate(requireContext(), appWidgetId)
-            }
-            activity?.finish()
-            return
-        }
-
         navigateToHome()
     }
 
     private fun navigateToHome() {
+        // No es necesario observar, ya que el ViewModel compartido notificará al InventarioFragment
+        // para que navegue si es necesario, pero tras el login, la navegación es explícita.
+        // También, el estado AUTHENTICATED evitará el bucle de "logout".
         val action = LoginFragmentDirections.actionLoginFragmentToInventarioFragment()
         findNavController().navigate(action)
     }
 
     private fun updateAllWidgets() {
+        // ... (tu lógica del widget se mantiene igual)
         val context = context ?: return
         val appWidgetManager = AppWidgetManager.getInstance(context)
         val componentName = ComponentName(context, InventoryWidgetProvider::class.java)
