@@ -49,11 +49,19 @@ class InventarioFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        /*
+        Este fragmento de código está comentado porque genera problemas al momento de cerrar
+        sesión, por haber 2 observers pendientes de lo mismo, entonces en caso de que lo necesiten
+        preparense para solucionar el problema
+
         loginViewModel.navigationToLoginState.observe(viewLifecycleOwner, EventObserver { state ->
             if (state is AuthenticationState.UNAUTHENTICATED) {
                 findNavController().navigate(R.id.action_inventarioFragment_to_LoginFragment)
             }
         })
+        */
+
+
 
         binding.toolbarInventario.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
@@ -121,11 +129,5 @@ class InventarioFragment : Fragment() {
 
     private fun openAddProductFragment() {
         findNavController().navigate(R.id.action_inventarioFragment_to_addProductFragment)
-    }
-
-    // --- CORRECCIÓN DE FUGA DE MEMORIA ---
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null // Limpia la referencia al binding para evitar memory leaks
     }
 }
