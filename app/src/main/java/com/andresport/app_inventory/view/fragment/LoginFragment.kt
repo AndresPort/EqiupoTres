@@ -1,4 +1,4 @@
-package com.andresport.app_inventory.view
+package com.andresport.app_inventory.view.fragment
 
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
@@ -6,7 +6,6 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +13,7 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.andresport.app_inventory.R
@@ -96,9 +96,12 @@ class LoginFragment : Fragment() {
     }
 
     private fun updateButtonsState() {
-        val enabled = emailEditText.text?.isNotEmpty() == true &&
-                (passwordEditText.text?.length ?: 0) >= 6 &&
-                passwordInputLayout.error == null
+        val email = emailEditText.text?.toString().orEmpty()
+        val password = passwordEditText.text?.toString().orEmpty()
+
+        val enabled = email.isNotEmpty() &&
+                password.length >= 6 &&
+                password.all { it.isDigit() }
 
         loginButton.isEnabled = enabled
         registerButton.isEnabled = enabled
@@ -112,6 +115,7 @@ class LoginFragment : Fragment() {
         registerButton.setTextColor(color)
         registerButton.setTypeface(null, style)
     }
+
 
     private fun loginUser() {
         val email = emailEditText.text.toString().trim()
@@ -164,16 +168,16 @@ class LoginFragment : Fragment() {
             AppWidgetManager.EXTRA_APPWIDGET_ID,
             AppWidgetManager.INVALID_APPWIDGET_ID
         ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
-        val loginOrigin = activity?.intent?.getStringExtra(InventoryWidgetProvider.EXTRA_LOGIN_ORIGIN)
+        val loginOrigin = activity?.intent?.getStringExtra(InventoryWidgetProvider.Companion.EXTRA_LOGIN_ORIGIN)
 
-        if (loginOrigin == InventoryWidgetProvider.ORIGIN_WIDGET_VISIBILITY && appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-            InventoryWidgetProvider.setBalanceVisibility(requireContext(), appWidgetId, true)
+        if (loginOrigin == InventoryWidgetProvider.Companion.ORIGIN_WIDGET_VISIBILITY && appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+            InventoryWidgetProvider.Companion.setBalanceVisibility(requireContext(), appWidgetId, true)
         }
 
         updateAllWidgets()
-        if (loginOrigin == InventoryWidgetProvider.ORIGIN_WIDGET_VISIBILITY) {
+        if (loginOrigin == InventoryWidgetProvider.Companion.ORIGIN_WIDGET_VISIBILITY) {
             if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                InventoryWidgetProvider.requestWidgetUpdate(requireContext(), appWidgetId)
+                InventoryWidgetProvider.Companion.requestWidgetUpdate(requireContext(), appWidgetId)
             }
             activity?.finish()
             return
