@@ -1,24 +1,23 @@
+// app/build.gradle - CORREGIDO PARA USAR KAPT
+
 plugins {
     id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
-    id ('kotlin-kapt')
-    id ('com.google.dagger.hilt.android')
-    id 'androidx.navigation.safeargs.kotlin'// Add the Google services Gradle plugin
+    id 'org.jetbrains.kotlin.android' version '2.0.0'
+    id 'kotlin-kapt' // <-- 1. Se añade KAPT
+    id 'com.google.dagger.hilt.android'
+    id 'androidx.navigation.safeargs.kotlin'
     id 'com.google.gms.google-services'
 }
 
-
 android {
     namespace 'com.andresport.app_inventory'
-    compileSdk 36
-
+    compileSdk 34
     defaultConfig {
         applicationId "com.andresport.app_inventory"
         minSdk 24
-        targetSdk 36
+        targetSdk 34
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -42,58 +41,38 @@ android {
         dataBinding true
         viewBinding true
     }
-
 }
 
 dependencies {
-
-    // Import the Firebase BoM
+    // Firebase
     implementation platform('com.google.firebase:firebase-bom:34.6.0')
-    // TODO: Add the dependencies for Firebase products you want to use
-    // When using the BoM, don't specify versions in Firebase dependencies
     implementation 'com.google.firebase:firebase-analytics'
-
-    // Firebase Auth
     implementation 'com.google.firebase:firebase-auth-ktx:22.3.1'
     implementation 'com.google.firebase:firebase-firestore:26.0.2'
 
-    // Core Android
-    implementation "androidx.core:core-ktx:1.13.1"
+    // --- Core AndroidX con versiones explícitas y estables ---
+    implementation "androidx.core:core-ktx:1.12.0"
     implementation "androidx.appcompat:appcompat:1.7.0"
-    implementation "com.google.android.material:material:1.12.0" // <-- Duplicado eliminado
+    implementation "com.google.android.material:material:1.12.0"
     implementation "androidx.constraintlayout:constraintlayout:2.1.4"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.7.0"
+    implementation 'androidx.activity:activity-ktx:1.9.0'
+    implementation 'androidx.fragment:fragment-ktx:1.7.1'
+    // ---
 
-    // Lifecycle components (ViewModel, LiveData)
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4"
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.8.4"
-
-    // Lottie animation
-    implementation "com.airbnb.android:lottie:6.4.1" // <-- Duplicado eliminado
-
-    // Navigation
+    // Otras dependencias
+    implementation "com.airbnb.android:lottie:6.4.1"
     implementation 'androidx.navigation:navigation-fragment-ktx:2.8.3'
     implementation 'androidx.navigation:navigation-ui-ktx:2.8.3'
-
-    // Room
-
     implementation 'com.google.android.gms:play-services-cast-framework:22.2.0'
-
-    // Biometric
     implementation "androidx.biometric:biometric:1.2.0-alpha05"
-
-    // Activity & Fragment
-    implementation 'androidx.activity:activity:1.11.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.fragment:fragment-ktx:1.8.0' // <-- Versión actualizada
-
-    // Coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
 
-    // dagger hint
-    implementation "com.google.dagger:hilt-android:2.47"
-    kapt "com.google.dagger:hilt-android-compiler:2.47"
-
-
+    // Dagger Hilt con KAPT
+    implementation "com.google.dagger:hilt-android:2.51.1"
+    kapt "com.google.dagger:hilt-android-compiler:2.51.1" // <-- 2. Se cambia KSP por KAPT
 
     // Testing
     testImplementation "junit:junit:4.13.2"
@@ -105,5 +84,4 @@ dependencies {
     debugImplementation("org.jacoco:org.jacoco.core:0.8.12")
     androidTestImplementation "androidx.test.ext:junit:1.2.1"
     androidTestImplementation "androidx.test.espresso:espresso-core:3.6.1"
-
 }
