@@ -23,11 +23,15 @@ import com.andresport.app_inventory.viewmodel.LoginViewModel
 import com.andresport.app_inventory.widget.InventoryWidgetProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import com.andresport.app_inventory.utils.SessionManager
+import com.google.firebase.auth.FirebaseAuth
 
 class LoginFragment : Fragment() {
 
     // CAMBIO 2: Usar el ViewModel de la actividad
     private val viewModel: LoginViewModel by activityViewModels()
+    private val sessionManager by lazy { SessionManager(requireContext()) }
+    private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
     private lateinit var emailEditText: TextInputEditText
     private lateinit var passwordEditText: TextInputEditText
@@ -45,8 +49,15 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // CAMBIO 3: Eliminar la lógica duplicada de SessionManager
-        // El ViewModel y el fragmento de inicio se encargarán de la navegación automática.
+        val savedToken = sessionManager.fetchAuthToken()
+        val firebaseUser = firebaseAuth.currentUser
+        if (savedToken != null || firebaseUser != null) {
+            val tokenToPersist = savedToken ?: firebaseUser?.uid
+            tokenToPersist?.let { sessionManager.saveAuthToken(it) }
+            viewModel.onAuthenticationSuccess()
+            handlePostLoginNavigation()
+            return
+        }
 
         emailEditText = view.findViewById(R.id.emailEditText)
         passwordEditText = view.findViewById(R.id.passwordEditText)
@@ -117,7 +128,7 @@ class LoginFragment : Fragment() {
     private fun loginUser() {
         val email = emailEditText.text.toString().trim()
         val password = passwordEditText.text.toString()
-
+        
         if (email.isEmpty() || password.length < 6) {
             Toast.makeText(requireContext(), "Login incorrecto", Toast.LENGTH_SHORT).show()
             return
@@ -162,16 +173,33 @@ class LoginFragment : Fragment() {
         // CAMBIO 4: Esta llamada ahora actualizará el estado del ViewModel compartido
         viewModel.onAuthenticationSuccess()
 
-        updateAllWidgets()
-        navigateToHome()
+        handlePostLoginNavigation()
     }
 
     private fun navigateToHome() {
-        // No es necesario observar, ya que el ViewModel compartido notificará al InventarioFragment
-        // para que navegue si es necesario, pero tras el login, la navegación es explícita.
-        // También, el estado AUTHENTICATED evitará el bucle de "logout".
         val action = LoginFragmentDirections.actionLoginFragmentToInventarioFragment()
         findNavController().navigate(action)
+    }
+
+    private fun handlePostLoginNavigation() {
+        val appWidgetId = activity?.intent?.getIntExtra(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            AppWidgetManager.INVALID_APPWIDGET_ID
+        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
+        val loginOrigin = activity?.intent?.getStringExtra(InventoryWidgetProvider.EXTRA_LOGIN_ORIGIN)
+
+        updateAllWidgets()
+
+        if (loginOrigin == InventoryWidgetProvider.ORIGIN_WIDGET_VISIBILITY) {
+            if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                InventoryWidgetProvider.setBalanceVisibility(requireContext(), appWidgetId, true)
+                InventoryWidgetProvider.requestWidgetUpdate(requireContext(), appWidgetId)
+            }
+            activity?.finish()
+            return
+        }
+
+        navigateToHome()
     }
 
     private fun updateAllWidgets() {
