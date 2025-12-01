@@ -14,7 +14,7 @@ import com.andresport.app_inventory.model.Product
 import com.andresport.app_inventory.viewmodel.AddProductViewModel
 import com.google.android.material.textfield.TextInputEditText
 
-class addProductFragment : Fragment() {
+class AddProductFragment : Fragment() {
 
     private lateinit var productRefTIET: TextInputEditText
     private lateinit var productNameTIET: TextInputEditText
@@ -42,11 +42,9 @@ class addProductFragment : Fragment() {
         stockTIET = view.findViewById(R.id.stockTIET)
         saveBtn = view.findViewById(R.id.saveBtn)
 
-        returnIc.setOnClickListener {
-            returnInventoryPage()
-        }
+        returnIc.setOnClickListener { returnInventoryPage() }
 
-        // TextWatcher para habilitar botón
+        // Validación
         val textWatcher = object : android.text.TextWatcher {
             override fun afterTextChanged(s: android.text.Editable?) {
                 saveBtn.isEnabled =
@@ -65,9 +63,7 @@ class addProductFragment : Fragment() {
         unitPriceTIET.addTextChangedListener(textWatcher)
         stockTIET.addTextChangedListener(textWatcher)
 
-        saveBtn.setOnClickListener {
-            saveProduct()
-        }
+        saveBtn.setOnClickListener { saveProduct() }
     }
 
     private fun saveProduct() {
@@ -86,7 +82,6 @@ class addProductFragment : Fragment() {
             stock = stock
         )
 
-        // Guardar con Firestore
         viewModel.insertProduct(product) { success, errorMessage ->
             if (success) {
                 Toast.makeText(requireContext(), "Producto guardado correctamente", Toast.LENGTH_SHORT).show()

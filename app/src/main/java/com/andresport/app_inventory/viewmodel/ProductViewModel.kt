@@ -4,8 +4,12 @@ import androidx.lifecycle.*
 import kotlinx.coroutines.launch
 import com.andresport.app_inventory.repository.ProductRepository
 import com.andresport.app_inventory.model.Product
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class ProductViewModel(private val repository: ProductRepository) : ViewModel() {
+@HiltViewModel
+class ProductViewModel @Inject constructor(private val repository: ProductRepository) : ViewModel() {
+
     private val _products = MutableLiveData<List<Product>>()
     val products: LiveData<List<Product>> get() = _products
 
