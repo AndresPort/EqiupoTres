@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="250dp"
-    android:minHeight="40dp"
-    android:targetCellWidth="2"
-    android:targetCellHeight="2"
+    android:minWidth="280dp"
+    android:minHeight="80dp"
+    android:minResizeWidth="250dp"
+    android:minResizeHeight="70dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="1"
     android:updatePeriodMillis="86400000"
     android:previewImage="@drawable/assignment_24dp_e3e3e3_fill0_wght400_grad0_opsz24"
     android:initialLayout="@layout/inventory_widget"
     android:resizeMode="horizontal|vertical"
-    android:widgetCategory="home_screen">
+    android:widgetCategory="home_screen"
+    android:description="@string/inventory">
 </appwidget-provider>
