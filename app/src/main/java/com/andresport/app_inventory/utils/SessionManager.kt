@@ -2,12 +2,16 @@ package com.andresport.app_inventory.utils
 
 import android.content.Context
 import android.content.SharedPreferences
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Esta clase es para gestionar la sesión del usuario a través de SharedPreferences.
  * Se encarga de guardar, recuperar y borrar el token de autenticación.
  */
-class SessionManager(context: Context) {
+@Singleton
+class SessionManager @Inject constructor(@ApplicationContext context: Context) {
 
     // Se inicializan las SharedPreferences en modo privado.
     private val prefs: SharedPreferences = context.getSharedPreferences("Auth", Context.MODE_PRIVATE)
