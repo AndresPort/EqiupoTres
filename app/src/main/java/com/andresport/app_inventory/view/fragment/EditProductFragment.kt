@@ -18,14 +18,11 @@ import com.andresport.app_inventory.repository.ProductRepository
 import com.andresport.app_inventory.viewmodel.EditProductViewModel
 import com.andresport.app_inventory.viewmodel.ViewModelFactory
 import com.google.android.material.textfield.TextInputEditText
-
+import dagger.hilt.android.AndroidEntryPoint
+@AndroidEntryPoint
 class EditProductFragment : Fragment(R.layout.fragment_edit_product) {
     private var productId: String? = null // variable local para guardar el ID del producto
-    private val viewModel: EditProductViewModel by viewModels {
-        ViewModelFactory(
-            ProductRepository()
-        )
-    }
+    private val viewModel: EditProductViewModel by viewModels () // aqui ya no se usa factory porque hilt inyecta automaticamente
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -40,7 +37,7 @@ class EditProductFragment : Fragment(R.layout.fragment_edit_product) {
         // CRITERIO 1: Toolbar - Botón de retroceso
         val returnIc = view.findViewById<ImageView>(R.id.returnIc)
         returnIc.setOnClickListener {
-            findNavController().popBackStack()
+            findNavController().popBackStack() // Regresa a la pantalla anterior
         }
 
         // CRITERIO 2: ID no editable
@@ -82,7 +79,7 @@ class EditProductFragment : Fragment(R.layout.fragment_edit_product) {
             }
         })
 
-        // CRITERIO 4: Guardar cambios (UPDATE en BD)
+        // CRITERIO 4: Guardar cambios se hace el UPDATE en la  BD
         btnSaveChanges.setOnClickListener {
             val newName = etName.text.toString().trim()
             val newPriceStr = etPrice.text.toString().trim()
