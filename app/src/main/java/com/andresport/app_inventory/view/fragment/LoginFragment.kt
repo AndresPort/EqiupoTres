@@ -9,64 +9,64 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.andresport.app_inventory.R
-// ¡ESTA ES LA IMPORTACIÓN QUE FALTABA!
-import com.andresport.app_inventory.view.fragment.LoginFragmentDirections
+import com.andresport.app_inventory.databinding.FragmentLoginBinding // Importar la clase de ViewBinding
 import com.andresport.app_inventory.viewmodel.LoginViewModel
 import com.andresport.app_inventory.widget.InventoryWidgetProvider
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
+import dagger.hilt.android.AndroidEntryPoint
 
+// 1. Anotar la clase para que Hilt pueda inyectar dependencias
+@AndroidEntryPoint
 class LoginFragment : Fragment() {
 
-    // CAMBIO 2: Usar el ViewModel de la actividad
-    private val viewModel: LoginViewModel by activityViewModels()
+    // 2. Inyectar el ViewModel usando el delegado de Hilt
+    private val viewModel: LoginViewModel by viewModels()
 
-    private lateinit var emailEditText: TextInputEditText
-    private lateinit var passwordEditText: TextInputEditText
-    private lateinit var passwordInputLayout: TextInputLayout
-    private lateinit var loginButton: Button
-    private lateinit var registerButton: Button
+    // 3. Implementar View Binding para acceder a las vistas de forma segura
+    private var _binding: FragmentLoginBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        return inflater.inflate(R.layout.fragment_login, container, false)
+        // Inflar el layout usando View Binding
+        _binding = FragmentLoginBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // CAMBIO 3: Eliminar la lógica duplicada de SessionManager
-        // El ViewModel y el fragmento de inicio se encargarán de la navegación automática.
-
-        emailEditText = view.findViewById(R.id.emailEditText)
-        passwordEditText = view.findViewById(R.id.passwordEditText)
-        passwordInputLayout = view.findViewById(R.id.passwordInputLayout)
-        loginButton = view.findViewById(R.id.loginButton)
-        registerButton = view.findViewById(R.id.registerButton)
+        // El chequeo de sesión existente se debe mover al ViewModel,
+        // pero por ahora lo mantenemos aquí para no romper la lógica actual.
+        // Lo ideal es que el ViewModel exponga un LiveData con el estado de la sesión.
+        // val savedToken = sessionManager.fetchAuthToken() ...
 
         setupUI()
 
-        loginButton.setOnClickListener { loginUser() }
-        registerButton.setOnClickListener { registerUser() }
+        binding.loginButton.setOnClickListener { loginUser() }
+        binding.registerButton.setOnClickListener { registerUser() }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // Limpiar la referencia al binding para evitar fugas de memoria
+        _binding = null
     }
 
     private fun setupUI() {
-        // ... (El resto de tu código no necesita cambios)
-        loginButton.isEnabled = false
-        registerButton.isEnabled = false
+        binding.loginButton.isEnabled = false
+        binding.registerButton.isEnabled = false
 
-        emailEditText.addTextChangedListener { updateButtonsState() }
-        passwordEditText.addTextChangedListener {
+        binding.emailEditText.addTextChangedListener { updateButtonsState() }
+        binding.passwordEditText.addTextChangedListener {
             updateButtonsState()
             validatePassword(it.toString())
         }
@@ -75,17 +75,17 @@ class LoginFragment : Fragment() {
     private fun validatePassword(input: String) {
         when {
             input.any { !it.isDigit() } -> {
-                passwordInputLayout.error = "Solo números"
+                binding.passwordInputLayout.error = "Solo números"
             }
             input.length < 6 -> {
-                passwordInputLayout.error = "Mínimo 6 dígitos"
-                passwordInputLayout.setBoxStrokeColor(
+                binding.passwordInputLayout.error = "Mínimo 6 dígitos"
+                binding.passwordInputLayout.setBoxStrokeColor(
                     ContextCompat.getColor(requireContext(), android.R.color.holo_red_light)
                 )
             }
             else -> {
-                passwordInputLayout.error = null
-                passwordInputLayout.setBoxStrokeColor(
+                binding.passwordInputLayout.error = null
+                binding.passwordInputLayout.setBoxStrokeColor(
                     ContextCompat.getColor(requireContext(), android.R.color.white)
                 )
             }
@@ -93,30 +93,29 @@ class LoginFragment : Fragment() {
     }
 
     private fun updateButtonsState() {
-        val email = emailEditText.text?.toString().orEmpty()
-        val password = passwordEditText.text?.toString().orEmpty()
+        val email = binding.emailEditText.text?.toString().orEmpty()
+        val password = binding.passwordEditText.text?.toString().orEmpty()
 
         val enabled = email.isNotEmpty() &&
                 password.length >= 6 &&
                 password.all { it.isDigit() }
 
-        loginButton.isEnabled = enabled
-        registerButton.isEnabled = enabled
+        binding.loginButton.isEnabled = enabled
+        binding.registerButton.isEnabled = enabled
 
         val color = if (enabled) Color.WHITE else Color.parseColor("#B0B0B0")
         val style = if (enabled) Typeface.BOLD else Typeface.NORMAL
 
-        loginButton.setTextColor(color)
-        loginButton.setTypeface(null, style)
+        binding.loginButton.setTextColor(color)
+        binding.loginButton.setTypeface(null, style)
 
-        registerButton.setTextColor(color)
-        registerButton.setTypeface(null, style)
+        binding.registerButton.setTextColor(color)
+        binding.registerButton.setTypeface(null, style)
     }
 
-
     private fun loginUser() {
-        val email = emailEditText.text.toString().trim()
-        val password = passwordEditText.text.toString()
+        val email = binding.emailEditText.text.toString().trim()
+        val password = binding.passwordEditText.text.toString()
 
         if (email.isEmpty() || password.length < 6) {
             Toast.makeText(requireContext(), "Login incorrecto", Toast.LENGTH_SHORT).show()
@@ -140,8 +139,8 @@ class LoginFragment : Fragment() {
     }
 
     private fun registerUser() {
-        val email = emailEditText.text.toString().trim()
-        val password = passwordEditText.text.toString()
+        val email = binding.emailEditText.text.toString().trim()
+        val password = binding.passwordEditText.text.toString()
 
         if (email.isEmpty() || password.length < 6) {
             Toast.makeText(requireContext(), "Error en el registro", Toast.LENGTH_SHORT).show()
@@ -159,23 +158,38 @@ class LoginFragment : Fragment() {
     }
 
     private fun handleLoginSuccess() {
-        // CAMBIO 4: Esta llamada ahora actualizará el estado del ViewModel compartido
         viewModel.onAuthenticationSuccess()
-
-        updateAllWidgets()
-        navigateToHome()
+        handlePostLoginNavigation()
     }
 
     private fun navigateToHome() {
-        // No es necesario observar, ya que el ViewModel compartido notificará al InventarioFragment
-        // para que navegue si es necesario, pero tras el login, la navegación es explícita.
-        // También, el estado AUTHENTICATED evitará el bucle de "logout".
+        // La clase de direcciones generada se mantiene igual
         val action = LoginFragmentDirections.actionLoginFragmentToInventarioFragment()
         findNavController().navigate(action)
     }
 
+    private fun handlePostLoginNavigation() {
+        val appWidgetId = activity?.intent?.getIntExtra(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            AppWidgetManager.INVALID_APPWIDGET_ID
+        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
+        val loginOrigin = activity?.intent?.getStringExtra(InventoryWidgetProvider.EXTRA_LOGIN_ORIGIN)
+
+        updateAllWidgets()
+
+        if (loginOrigin == InventoryWidgetProvider.ORIGIN_WIDGET_VISIBILITY) {
+            if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                InventoryWidgetProvider.setBalanceVisibility(requireContext(), appWidgetId, true)
+                InventoryWidgetProvider.requestWidgetUpdate(requireContext(), appWidgetId)
+            }
+            activity?.finish()
+            return
+        }
+
+        navigateToHome()
+    }
+
     private fun updateAllWidgets() {
-        // ... (tu lógica del widget se mantiene igual)
         val context = context ?: return
         val appWidgetManager = AppWidgetManager.getInstance(context)
         val componentName = ComponentName(context, InventoryWidgetProvider::class.java)

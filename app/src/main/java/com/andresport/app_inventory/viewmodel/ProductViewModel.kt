@@ -1,14 +1,19 @@
 package com.andresport.app_inventory.viewmodel
 
-import androidx.lifecycle.*
-import kotlinx.coroutines.launch
-import com.andresport.app_inventory.repository.ProductRepository
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.andresport.app_inventory.model.Product
+import com.andresport.app_inventory.repository.IProductRepository // <-- CAMBIO: Importar la interfaz
+import com.andresport.app_inventory.util.OpenForTesting
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OpenForTesting
 @HiltViewModel
-class ProductViewModel @Inject constructor(private val repository: ProductRepository) : ViewModel() {
+class ProductViewModel @Inject constructor(private val repository: IProductRepository) : ViewModel() { // <-- CAMBIO: Depender de la interfaz
 
     private val _products = MutableLiveData<List<Product>>()
     val products: LiveData<List<Product>> get() = _products
@@ -30,7 +35,6 @@ class ProductViewModel @Inject constructor(private val repository: ProductReposi
                     stock = e.stock
                 )
             }
-            // Calcular el total sumando unitPrice * stock de cada producto
             _totalSum.value = entities.sumOf { it.unitPrice * it.stock }
         }
     }

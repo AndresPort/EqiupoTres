@@ -3,13 +3,25 @@ package com.andresport.app_inventory.repository
 import com.andresport.app_inventory.model.Product
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class ProductRepository {
+// 1. SE DEFINE LA INTERFAZ
+interface IProductRepository {
+    suspend fun exists(productRef: String): Boolean
+    suspend fun insertProduct(product: Product): Boolean
+    suspend fun getAllProducts(): List<Product>
+    suspend fun updateProduct(product: Product)
+    suspend fun deleteProduct(product: Product)
+    suspend fun getProductById(productRef: String): Product?
+}
+
+// 2. LA CLASE AHORA IMPLEMENTA LA INTERFAZ
+class ProductRepository @Inject constructor() : IProductRepository {
 
     private val db = FirebaseFirestore.getInstance()
     private val collection = db.collection("products")
 
-    suspend fun exists(productRef: String): Boolean {
+    override suspend fun exists(productRef: String): Boolean {
         return try {
             val document = collection.document(productRef).get().await()
             document.exists()
@@ -18,27 +30,19 @@ class ProductRepository {
         }
     }
 
-    suspend fun insertProduct(product: Product): Boolean {
+    override suspend fun insertProduct(product: Product): Boolean {
         return try {
-
-            // VALIDAR DUPLICADO
             if (exists(product.productRef)) {
-                return false  // No se debe insertar
+                return false
             }
-
-            // Insertar normalmente
-            collection.document(product.productRef)
-                .set(product)
-                .await()
-
-            true  // Insertado correctamente
-
+            collection.document(product.productRef).set(product).await()
+            true
         } catch (e: Exception) {
             false
         }
     }
 
-    suspend fun getAllProducts(): List<Product> {
+    override suspend fun getAllProducts(): List<Product> {
         return try {
             val snapshot = collection.get().await()
             snapshot.toObjects(Product::class.java)
@@ -47,7 +51,7 @@ class ProductRepository {
         }
     }
 
-    suspend fun updateProduct(product: Product) {
+    override suspend fun updateProduct(product: Product) {
         try {
             collection.document(product.productRef).set(product).await()
         } catch (e: Exception) {
@@ -55,7 +59,7 @@ class ProductRepository {
         }
     }
 
-    suspend fun deleteProduct(product: Product) {
+    override suspend fun deleteProduct(product: Product) {
         try {
             collection.document(product.productRef).delete().await()
         } catch (e: Exception) {
@@ -63,7 +67,7 @@ class ProductRepository {
         }
     }
 
-    suspend fun getProductById(productRef: String): Product? {
+    override suspend fun getProductById(productRef: String): Product? {
         return try {
             val doc = collection.document(productRef).get().await()
             doc.toObject(Product::class.java)
@@ -72,6 +76,3 @@ class ProductRepository {
         }
     }
 }
-
-
-

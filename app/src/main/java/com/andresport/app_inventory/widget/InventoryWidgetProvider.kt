@@ -10,6 +10,7 @@ import com.andresport.app_inventory.R
 import com.andresport.app_inventory.model.InventoryRepository
 import com.andresport.app_inventory.utils.SessionManager
 import com.andresport.app_inventory.view.MainActivity
+import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,6 +26,8 @@ class InventoryWidgetProvider : AppWidgetProvider() {
         const val ACTION_WIDGET_UPDATE = "com.andresport.app_inventory.widget.ACTION_WIDGET_UPDATE"
         private const val PREFS_NAME = "com.andresport.app_inventory.widget.InventoryWidget"
         private const val PREF_IS_VISIBLE = "is_balance_visible_"
+
+        // Constantes públicas para comunicación
         const val EXTRA_LOGIN_ORIGIN = "LOGIN_ORIGIN"
         const val ORIGIN_WIDGET_VISIBILITY = "FROM_WIDGET_VISIBILITY"
         const val ORIGIN_WIDGET_MANAGE = "FROM_WIDGET_MANAGE"
@@ -55,27 +58,21 @@ class InventoryWidgetProvider : AppWidgetProvider() {
         super.onReceive(context, intent)
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
 
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) return
+
         when (intent.action) {
-            ACTION_TOGGLE_VISIBILITY -> {
-                if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                    toggleVisibility(context, appWidgetId)
-                }
-            }
-            ACTION_MANAGE_INVENTORY -> {
-                openAppForManagement(context, appWidgetId)
-            }
+            ACTION_TOGGLE_VISIBILITY -> toggleVisibility(context, appWidgetId)
+            ACTION_MANAGE_INVENTORY -> openAppForManagement(context, appWidgetId)
             ACTION_WIDGET_UPDATE -> {
                 val appWidgetManager = AppWidgetManager.getInstance(context)
-                val thisAppWidget = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-                if (thisAppWidget != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                    updateAppWidget(context, appWidgetManager, thisAppWidget)
-                }
+                updateAppWidget(context, appWidgetManager, appWidgetId)
             }
         }
     }
 
     private fun openAppForManagement(context: Context, appWidgetId: Int) {
-        val sessionManager = SessionManager(context)
+        val hiltEntryPoint = EntryPointAccessors.fromApplication(context, InventoryWidgetEntryPoint::class.java)
+        val sessionManager = hiltEntryPoint.sessionManager()
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -89,7 +86,8 @@ class InventoryWidgetProvider : AppWidgetProvider() {
     }
 
     private fun toggleVisibility(context: Context, appWidgetId: Int) {
-        val sessionManager = SessionManager(context)
+        val hiltEntryPoint = EntryPointAccessors.fromApplication(context, InventoryWidgetEntryPoint::class.java)
+        val sessionManager = hiltEntryPoint.sessionManager()
         if (sessionManager.fetchAuthToken() != null) {
             val prefs = context.getSharedPreferences(PREFS_NAME, 0)
             val isVisible = prefs.getBoolean(PREF_IS_VISIBLE + appWidgetId, false)
@@ -106,10 +104,12 @@ class InventoryWidgetProvider : AppWidgetProvider() {
     }
 
     private fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
-        val repository = InventoryRepository(context)
+        val hiltEntryPoint = EntryPointAccessors.fromApplication(context, InventoryWidgetEntryPoint::class.java)
+        val repository = hiltEntryPoint.inventoryRepository()
+        val sessionManager = hiltEntryPoint.sessionManager()
+        
         val prefs = context.getSharedPreferences(PREFS_NAME, 0)
         val isBalanceVisible = prefs.getBoolean(PREF_IS_VISIBLE + appWidgetId, false)
-        val sessionManager = SessionManager(context)
         val isLoggedIn = sessionManager.fetchAuthToken() != null
 
         CoroutineScope(Dispatchers.IO).launch {

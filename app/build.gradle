@@ -7,6 +7,7 @@ plugins {
     id 'com.google.dagger.hilt.android'
     id 'androidx.navigation.safeargs.kotlin'
     id 'com.google.gms.google-services'
+    id 'jacoco' // <-- AÑADIDO PARA LA COBERTURA
 }
 
 android {
@@ -25,6 +26,9 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            enableUnitTestCoverage true // <-- AÑADIDO PARA LA COBERTURA
         }
     }
 
@@ -72,15 +76,14 @@ dependencies {
 
     // Dagger Hilt con KAPT
     implementation "com.google.dagger:hilt-android:2.51.1"
-    kapt "com.google.dagger:hilt-android-compiler:2.51.1" // <-- 2. Se cambia KSP por KAPT
+    kapt "com.google.dagger:hilt-android-compiler:2.51.1"
 
     // Testing
     testImplementation "junit:junit:4.13.2"
-    testImplementation "org.mockito:mockito-core:4.1.0"
-    testImplementation "org.mockito:mockito-inline:4.1.0"
-    testImplementation "org.mockito:mockito-android:4.1.0"
+    testImplementation "org.mockito:mockito-core:5.11.0"
+    // testImplementation "org.mockito:mockito-inline:5.11.0" // <-- ELIMINADO
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1"
-    testImplementation "androidx.arch.core:core-testing:2.5.1"
+    testImplementation "androidx.arch.core:core-testing:2.2.0"
     debugImplementation("org.jacoco:org.jacoco.core:0.8.12")
     androidTestImplementation "androidx.test.ext:junit:1.2.1"
     androidTestImplementation "androidx.test.espresso:espresso-core:3.6.1"
