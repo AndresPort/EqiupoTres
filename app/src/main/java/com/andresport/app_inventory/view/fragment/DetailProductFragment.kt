@@ -7,21 +7,21 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.andresport.app_inventory.R
 import com.andresport.app_inventory.databinding.FragmentProductDetailBinding
-import com.andresport.app_inventory.repository.ProductRepository
 import com.andresport.app_inventory.viewmodel.ProductViewModel
-import com.andresport.app_inventory.viewmodel.ViewModelFactory
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
- 
+
+@AndroidEntryPoint
 class DetailProductFragment : Fragment() {
     private var _binding: FragmentProductDetailBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: ProductViewModel
+    private val viewModel: ProductViewModel by viewModels()
     private var productRef: String? = null
     private var currentProduct: com.andresport.app_inventory.model.Product? = null
 
@@ -35,13 +35,6 @@ class DetailProductFragment : Fragment() {
         binding.icBack.setOnClickListener {
             findNavController().popBackStack()
         }
-
-        // Inicializar ProductRepository con Firebase (sin necesidad de DAO)
-        val repository = ProductRepository()
-        viewModel = ViewModelProvider(
-            this,
-            ViewModelFactory(repository)
-        )[ProductViewModel::class.java]
 
         productRef = arguments?.getString("productRef")
 
