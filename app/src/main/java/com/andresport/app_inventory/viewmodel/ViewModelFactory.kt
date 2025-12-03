@@ -1,3 +1,4 @@
+/*
 package com.andresport.app_inventory.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -23,3 +24,5 @@ class ViewModelFactory(
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }
+
+ */

@@ -16,9 +16,10 @@ import androidx.fragment.app.setFragmentResult
 import com.andresport.app_inventory.R
 import com.andresport.app_inventory.repository.ProductRepository
 import com.andresport.app_inventory.viewmodel.EditProductViewModel
-import com.andresport.app_inventory.viewmodel.ViewModelFactory
+// import com.andresport.app_inventory.viewmodel.ViewModelFactory <-- ELIMINADO
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
+
 @AndroidEntryPoint
 class EditProductFragment : Fragment(R.layout.fragment_edit_product) {
     private var productId: String? = null // variable local para guardar el ID del producto

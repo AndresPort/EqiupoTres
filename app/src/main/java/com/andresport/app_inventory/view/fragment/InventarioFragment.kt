@@ -20,22 +20,16 @@ import com.andresport.app_inventory.viewmodel.LoginViewModel
 import com.andresport.app_inventory.viewmodel.ProductViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
-// PASO 1: Anotar el Fragment para que Hilt pueda inyectar dependencias.
 @AndroidEntryPoint
 class InventarioFragment : Fragment() {
 
     private var _binding: FragmentInventarioBinding? = null
     private val binding get() = _binding!!
 
-    // El LoginViewModel sigue obteniéndose de la Activity, esto no cambia.
     private val loginViewModel: LoginViewModel by activityViewModels()
-
-    // --- DECLARACIÓN DE VARIABLES ---
-    private lateinit var adapter: ProductAdapter
-
-    // PASO 2: Inyectar el ProductViewModel usando Hilt.
-    // Hilt se encargará de crear el ViewModel con su repositorio.
     private val viewModel: ProductViewModel by viewModels()
+
+    private lateinit var adapter: ProductAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -58,21 +52,34 @@ class InventarioFragment : Fragment() {
             }
         }
 
-        // Observador para el estado de autenticación (sin cambios).
-        loginViewModel.authenticationState.observe(viewLifecycleOwner) { state ->
-            if (state is AuthenticationState.UNAUTHENTICATED) {
-                val navOptions = NavOptions.Builder()
-                    .setPopUpTo(findNavController().graph.startDestinationId, true)
-                    .build()
-                findNavController().navigate(
-                    R.id.action_inventarioFragment_to_LoginFragment,
-                    null,
-                    navOptions
-                )
+        // CAMBIO: Observar el LiveData envuelto en un Event
+        loginViewModel.navigationToLoginState.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let { state ->
+                if (state is AuthenticationState.UNAUTHENTICATED) {
+                    val navOptions = NavOptions.Builder()
+                        .setPopUpTo(findNavController().graph.startDestinationId, true)
+                        .build()
+                    findNavController().navigate(
+                        R.id.action_inventarioFragment_to_LoginFragment,
+                        null,
+                        navOptions
+                    )
+                }
             }
         }
 
-        // Configuración del adaptador del RecyclerView (sin cambios).
+        setupRecyclerView()
+
+        binding.fabAddProduct.setOnClickListener {
+            openAddProductFragment()
+        }
+
+        observeViewModel()
+
+        setFragmentResultListeners()
+    }
+
+    private fun setupRecyclerView() {
         adapter = ProductAdapter { selectedProduct ->
             val bundle = Bundle().apply {
                 putString("productRef", selectedProduct.productRef)
@@ -82,35 +89,24 @@ class InventarioFragment : Fragment() {
                 bundle
             )
         }
-
         binding.recyclerViewProducts.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerViewProducts.adapter = adapter
+    }
 
-        binding.fabAddProduct.setOnClickListener {
-            openAddProductFragment()
-        }
-
-        // PASO 3: Eliminar la creación manual del ViewModel y sus dependencias.
-        // val repository = ProductRepository() // <-- ELIMINADO
-        // val factory = ViewModelFactory(repository) // <-- ELIMINADO
-        // viewModel = ViewModelProvider(this, factory)[ProductViewModel::class.java] // <-- REEMPLAZADO por "by viewModels()"
-
-        // Observar los datos del ViewModel inyectado.
+    private fun observeViewModel() {
         binding.progressBar.visibility = View.VISIBLE
         viewModel.products.observe(viewLifecycleOwner) { products ->
             adapter.setProducts(products)
             binding.progressBar.visibility = View.GONE
         }
-
-        // Cargar los productos.
-        // El ViewModel ya está disponible, así que podemos llamar a sus métodos directamente.
         viewModel.loadProducts()
+    }
 
-        // Listener para cuando un producto es editado (sin cambios funcionales).
+    private fun setFragmentResultListeners() {
         setFragmentResultListener("editProductRequest") { _, bundle ->
             val wasUpdated = bundle.getBoolean("productUpdated", false)
             if (wasUpdated) {
-                viewModel.loadProducts() // Recargamos los productos.
+                viewModel.loadProducts()
                 Toast.makeText(requireContext(), "Lista actualizada", Toast.LENGTH_SHORT).show()
             }
         }
@@ -118,7 +114,7 @@ class InventarioFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null // Limpia la referencia al binding para evitar memory leaks.
+        _binding = null
     }
 
     private fun openAddProductFragment() {
