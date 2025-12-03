@@ -16,7 +16,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.andresport.app_inventory.R
-import com.andresport.app_inventory.databinding.FragmentLoginBinding // Importar la clase de ViewBinding
+import com.andresport.app_inventory.databinding.FragmentLoginBinding
 import com.andresport.app_inventory.viewmodel.LoginViewModel
 import com.andresport.app_inventory.widget.InventoryWidgetProvider
 import dagger.hilt.android.AndroidEntryPoint
