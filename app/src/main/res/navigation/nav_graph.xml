@@ -1,30 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/LoginFragment">
+    app:startDestination="@id/splashFragment">
 
     <fragment
-        android:id="@+id/LoginFragment"
-        android:name="com.andresport.app_inventory.view.fragment.LoginFragment"
-        android:label="Login"
-        tools:layout="@layout/fragment_login">
-
+        android:id="@+id/splashFragment"
+        android:name="com.andresport.app_inventory.view.fragment.SplashFragment"
+        android:label="fragment_splash"
+        tools:layout="@layout/fragment_splash">
         <action
-            android:id="@+id/action_LoginFragment_to_InventarioFragment"
+            android:id="@+id/action_splashFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_splashFragment_to_inventarioFragment"
             app:destination="@id/inventarioFragment"
-            app:popUpTo="@id/nav_graph"
+            app:popUpTo="@id/splashFragment"
             app:popUpToInclusive="true" />
     </fragment>
 
-
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.andresport.app_inventory.view.fragment.LoginFragment"
+        android:label="Login"
+        tools:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_LoginFragment_to_inventarioFragment" 
+            app:destination="@id/inventarioFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
 
     <fragment
         android:id="@+id/inventarioFragment"
         android:name="com.andresport.app_inventory.view.fragment.InventarioFragment"
         android:label="Inventario"
         tools:layout="@layout/fragment_inventario">
-
         <action
             android:id="@+id/action_inventarioFragment_to_addProductFragment"
             app:destination="@id/addProductFragment" />
@@ -33,11 +47,10 @@
             app:destination="@id/editProductFragment" />
         <action
             android:id="@+id/action_inventarioFragment_to_detailProductFragment"
-            app:destination="@id/productDetailFragment" />
-
+            app:destination="@id/detailProductFragment" />
         <action
             android:id="@+id/action_inventarioFragment_to_LoginFragment"
-            app:destination="@id/LoginFragment"
+            app:destination="@id/loginFragment"
             app:popUpTo="@id/nav_graph"
             app:popUpToInclusive="true" />
     </fragment>
@@ -45,41 +58,40 @@
     <fragment
         android:id="@+id/addProductFragment"
         android:name="com.andresport.app_inventory.view.fragment.AddProductFragment"
-        android:label="fragment_add_product" >
+        android:label="fragment_add_product">
         <action
             android:id="@+id/action_addProductFragment_to_inventarioFragment"
             app:destination="@id/inventarioFragment"
-            app:popUpTo="@id/inventarioFragment"
-            app:popUpToInclusive="true"/>
+            app:popUpTo="@id/addProductFragment"
+            app:popUpToInclusive="true" />
     </fragment>
+
     <fragment
         android:id="@+id/editProductFragment"
         android:name="com.andresport.app_inventory.view.fragment.EditProductFragment"
-        android:label="fragment_edit_product"
-        tools:layout="@layout/fragment_edit_product">
+        android:label="fragment_edit_product">
         <action
             android:id="@+id/action_editProductFragment_to_inventarioFragment"
             app:destination="@id/inventarioFragment"
-            app:popUpTo="@id/inventarioFragment"
+            app:popUpTo="@id/editProductFragment"
             app:popUpToInclusive="true" />
     </fragment>
+
     <fragment
-        android:id="@+id/productDetailFragment"
+        android:id="@+id/detailProductFragment"
         android:name="com.andresport.app_inventory.view.fragment.DetailProductFragment"
         android:label="Detalle del Producto"
         tools:layout="@layout/fragment_product_detail">
-
         <argument
             android:name="productRef"
             app:argType="string"
-            android:defaultValue=""/>
-
-        <action
-            android:id="@+id/action_productDetailFragment_to_inventarioFragment"
-            app:destination="@id/inventarioFragment" />
+            android:defaultValue="" />
         <action
             android:id="@+id/action_productDetailFragment_to_editProductFragment"
             app:destination="@id/editProductFragment" />
+        <action
+            android:id="@+id/action_productDetailFragment_to_inventarioFragment"
+            app:destination="@id/inventarioFragment" />
     </fragment>
 
 </navigation>
