@@ -13,7 +13,9 @@ import com.andresport.app_inventory.R
 import com.andresport.app_inventory.model.Product
 import com.andresport.app_inventory.viewmodel.AddProductViewModel
 import com.google.android.material.textfield.TextInputEditText
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class AddProductFragment : Fragment() {
 
     private lateinit var productRefTIET: TextInputEditText
