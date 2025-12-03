@@ -11,16 +11,13 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.any
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
@@ -35,7 +32,6 @@ class ProductViewModelTest {
     private lateinit var mockRepository: IProductRepository
 
     private lateinit var viewModel: ProductViewModel
-
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
@@ -49,38 +45,37 @@ class ProductViewModelTest {
         Dispatchers.resetMain()
     }
 
-    // --- Pruebas para loadProducts (ya existentes) ---
+    // -------------------- loadProducts --------------------
     @Test
-    fun `loadProducts - cuando el repositorio tiene datos, el LiveData se actualiza`() = runTest {
-        val fakeProducts = listOf(
-            Product("1", "P1", 10.0, 5),
-            Product("2", "P2", 20.0, 2)
-        )
+    fun `loadProducts con datos actualiza LiveData`() = runTest {
+        val fakeProducts = listOf(Product("1", "P1", 10.0, 5))
+
         whenever(mockRepository.getAllProducts()).thenReturn(fakeProducts)
 
         viewModel.loadProducts()
         advanceUntilIdle()
 
         assertEquals(fakeProducts, viewModel.products.value)
-        assertEquals(90.0, viewModel.totalSum.value!!, 0.0)
+        assertEquals(50.0, viewModel.totalSum.value!!, 0.0)
     }
 
     @Test
-    fun `loadProducts - cuando el repositorio está vacío, el LiveData está vacío`() = runTest {
+    fun `loadProducts vacío produce lista vacía`() = runTest {
         whenever(mockRepository.getAllProducts()).thenReturn(emptyList())
 
         viewModel.loadProducts()
         advanceUntilIdle()
 
-        assertTrue(viewModel.products.value?.isEmpty() ?: false)
+        assertTrue(viewModel.products.value!!.isEmpty())
         assertEquals(0.0, viewModel.totalSum.value!!, 0.0)
     }
 
-    // --- Pruebas para loadProductByRef ---
+    // -------------------- loadProductByRef --------------------
     @Test
-    fun `loadProductByRef - cuando la referencia existe - el LiveData del producto seleccionado se actualiza`() = runTest {
-        val productRef = "prod123"
-        val fakeProduct = Product(productRef, "Test Product", 10.0, 1)
+    fun `loadProductByRef actualiza selectedProduct`() = runTest {
+        val productRef = "p10"
+        val fakeProduct = Product(productRef, "Test", 10.0, 1)
+
         whenever(mockRepository.getProductById(productRef)).thenReturn(fakeProduct)
 
         viewModel.loadProductByRef(productRef)
@@ -89,26 +84,55 @@ class ProductViewModelTest {
         assertEquals(fakeProduct, viewModel.selectedProduct.value)
     }
 
-    // --- Pruebas para addProduct ---
+    // -------------------- INSERT (Nuevo formato con callback) --------------------
     @Test
-    fun `addProduct - debe llamar a insertProduct del repositorio y recargar la lista`() = runTest {
-        val newProduct = Product("newProd", "New Product", 15.0, 10)
-        // Hacemos que getAllProducts devuelva una lista vacía la primera vez y la nueva lista la segunda vez
-        whenever(mockRepository.getAllProducts()).thenReturn(emptyList(), listOf(newProduct))
+    fun `insertProduct llama insert y recarga lista correctamente`() = runTest {
+        val p = Product("N1","Nuevo",20.0,4)
 
-        viewModel.addProduct(newProduct)
+        whenever(mockRepository.insertProduct(p)).thenReturn(true)
+        whenever(mockRepository.getAllProducts()).thenReturn(listOf(p))
+
+        var callbackResult: Pair<Boolean, String?>? = null
+
+        viewModel.insertProduct(p) { success, msg ->
+            callbackResult = success to msg
+        }
         advanceUntilIdle()
 
-        // Verifica que se llamó a insertar y luego a recargar (que a su vez llama a getAllProducts)
-        verify(mockRepository).insertProduct(newProduct)
+        verify(mockRepository).insertProduct(p)
         verify(mockRepository).getAllProducts()
-        assertEquals(listOf(newProduct), viewModel.products.value)
+
+        assertEquals(listOf(p), viewModel.products.value)
+        assertNotNull(callbackResult)
+        assertTrue(callbackResult!!.first)
     }
 
-    // --- Pruebas para updateProduct ---
     @Test
-    fun `updateProduct - debe llamar a updateProduct del repositorio y recargar la lista`() = runTest {
-        val updatedProduct = Product("prod1", "Updated Product", 25.0, 20)
+    fun `insertProduct falla y devuelve mensaje de error`() = runTest {
+        val p = Product("N1","Nuevo",20.0,4)
+
+        whenever(mockRepository.insertProduct(p)).thenReturn(false)
+
+        var callbackResult: Pair<Boolean, String?>? = null
+
+        viewModel.insertProduct(p) { success, msg ->
+            callbackResult = success to msg
+        }
+        advanceUntilIdle()
+
+        verify(mockRepository).insertProduct(p)
+
+        // No debe recargar lista porque insert falló
+        assertNotNull(callbackResult)
+        assertFalse(callbackResult!!.first)
+        assertEquals("Error: La referencia del producto ya existe.", callbackResult!!.second)
+    }
+
+    // -------------------- UPDATE --------------------
+    @Test
+    fun `updateProduct actualiza y recarga lista`() = runTest {
+        val updatedProduct = Product("1","Modificado",15.0,5)
+
         whenever(mockRepository.getAllProducts()).thenReturn(listOf(updatedProduct))
 
         viewModel.updateProduct(updatedProduct)
@@ -119,32 +143,33 @@ class ProductViewModelTest {
         assertEquals(listOf(updatedProduct), viewModel.products.value)
     }
 
-    // --- Pruebas para deleteProduct ---
+    // -------------------- DELETE --------------------
     @Test
-    fun `deleteProduct - debe llamar a deleteProduct del repositorio y recargar la lista`() = runTest {
-        val productToDelete = Product("prod2", "ToDelete", 5.0, 5)
-        // La segunda llamada a getAllProducts debe devolver una lista vacía
+    fun `deleteProduct borra y recarga lista`() = runTest {
+        val deleted = Product("1","Eliminar",10.0,1)
+
         whenever(mockRepository.getAllProducts()).thenReturn(emptyList())
 
-        viewModel.deleteProduct(productToDelete)
+        viewModel.deleteProduct(deleted)
         advanceUntilIdle()
 
-        verify(mockRepository).deleteProduct(productToDelete)
+        verify(mockRepository).deleteProduct(deleted)
         verify(mockRepository).getAllProducts()
-        assertTrue(viewModel.products.value?.isEmpty() ?: false)
+        assertTrue(viewModel.products.value!!.isEmpty())
     }
 
-    // --- Pruebas para getProductById ---
+    // -------------------- getProductById directo --------------------
     @Test
-    fun `getProductById - debe llamar al repositorio y devolver el producto`() = runTest {
-        val productRef = "prod_direct"
-        val expectedProduct = Product(productRef, "Direct Product", 1.0, 1)
-        whenever(mockRepository.getProductById(productRef)).thenReturn(expectedProduct)
+    fun `getProductById consulta repo y devuelve resultado`() = runTest {
+        val productRef = "direct"
+        val expected = Product(productRef,"Directo",3.0,2)
+
+        whenever(mockRepository.getProductById(productRef)).thenReturn(expected)
 
         val result = viewModel.getProductById(productRef)
         advanceUntilIdle()
 
         verify(mockRepository).getProductById(productRef)
-        assertEquals(expectedProduct, result)
+        assertEquals(expected, result)
     }
 }

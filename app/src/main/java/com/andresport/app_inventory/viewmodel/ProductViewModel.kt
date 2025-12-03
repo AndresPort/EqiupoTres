@@ -5,7 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andresport.app_inventory.model.Product
-import com.andresport.app_inventory.repository.IProductRepository // <-- CAMBIO: Importar la interfaz
+import com.andresport.app_inventory.repository.IProductRepository
 import com.andresport.app_inventory.util.OpenForTesting
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -13,79 +13,106 @@ import javax.inject.Inject
 
 @OpenForTesting
 @HiltViewModel
-class ProductViewModel @Inject constructor(private val repository: IProductRepository) : ViewModel() { // <-- CAMBIO: Depender de la interfaz
+class ProductViewModel @Inject constructor(
+    private val repository: IProductRepository
+) : ViewModel() {
 
     private val _products = MutableLiveData<List<Product>>()
     val products: LiveData<List<Product>> get() = _products
 
-    private val _selectedProduct = MutableLiveData<Product>()
-    val selectedProduct: LiveData<Product> get() = _selectedProduct
+    private val _selectedProduct = MutableLiveData<Product?>()
+    val selectedProduct: LiveData<Product?> get() = _selectedProduct
 
     private val _totalSum = MutableLiveData<Double>()
     val totalSum: LiveData<Double> get() = _totalSum
 
+
+    // ============================================================
+    // Load
+    // ============================================================
     fun loadProducts() {
         viewModelScope.launch {
-            val entities = repository.getAllProducts()
-            _products.value = entities.map { e ->
-                Product(
-                    productRef = e.productRef,
-                    productName = e.productName,
-                    unitPrice = e.unitPrice,
-                    stock = e.stock
-                )
-            }
-            _totalSum.value = entities.sumOf { it.unitPrice * it.stock }
+            val list = repository.getAllProducts()
+            _products.value = list
+            _totalSum.value = list.sumOf { it.unitPrice * it.stock }
         }
     }
 
     fun loadProductByRef(productRef: String) {
         viewModelScope.launch {
             val product = repository.getProductById(productRef)
-            product?.let { _selectedProduct.value = it }
+            _selectedProduct.postValue(product)
         }
     }
 
-    fun addProduct(product: Product) {
+    // ============================================================
+    // Insert (antes AddProductViewModel)
+    // ============================================================
+    fun insertProduct(product: Product, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
-            val entity = Product(
-                productRef = product.productRef,
-                productName = product.productName,
-                stock = product.stock,
-                unitPrice = product.unitPrice
-            )
-            repository.insertProduct(entity)
-            loadProducts()
+            try {
+                val success = repository.insertProduct(product)
+
+                if (success) {
+                    loadProducts()
+                    onResult(true, null)
+                } else {
+                    onResult(false, "Error: La referencia del producto ya existe.")
+                }
+
+            } catch (e: Exception) {
+                onResult(false, e.message)
+            }
         }
     }
 
-    fun updateProduct(product: Product) {
+    // ============================================================
+    // Update general + Update tipo EditProduct
+    // ============================================================
+    fun updateProduct(product: Product, onResult: (Boolean, String?) -> Unit = {_,_->} ) {
         viewModelScope.launch {
-            val entity = Product(
-                productRef = product.productRef,
-                productName = product.productName,
-                stock = product.stock,
-                unitPrice = product.unitPrice
-            )
-            repository.updateProduct(entity)
-            loadProducts()
+            try {
+                repository.updateProduct(product)
+                loadProducts()
+                onResult(true, null)
+            } catch (e: Exception) {
+                onResult(false, e.message)
+            }
         }
     }
+    fun updateProductFields(
+        productRef: String,
+        newName: String,
+        newPrice: Double,
+        newStock: Long,
+        onResult: (Boolean, String?) -> Unit = {_,_->}
+    ) {
+        val updated = Product(
+            productRef = productRef,
+            productName = newName,
+            unitPrice = newPrice,
+            stock = newStock
+        )
+        updateProduct(updated, onResult)
+    }
 
-    fun deleteProduct(product: Product) {
+
+    // ============================================================
+    // Delete
+    // ============================================================
+    fun deleteProduct(product: Product, onResult: (Boolean, String?) -> Unit = {_,_->}) {
         viewModelScope.launch {
-            val entity = Product(
-                productRef = product.productRef,
-                productName = product.productName,
-                stock = product.stock,
-                unitPrice = product.unitPrice
-            )
-            repository.deleteProduct(entity)
-            loadProducts()
+            try {
+                repository.deleteProduct(product)
+                loadProducts()
+                onResult(true, null)
+            } catch (e: Exception) {
+                onResult(false, e.message)
+            }
         }
     }
 
-    suspend fun getProductById(productRef: String): Product? {
-        return repository.getProductById(productRef)
-    }
+
+    suspend fun getProductById(productRef: String): Product? =
+        repository.getProductById(productRef)
 }

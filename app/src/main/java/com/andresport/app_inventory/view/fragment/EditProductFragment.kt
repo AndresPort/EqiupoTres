@@ -10,97 +10,92 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
-import androidx.fragment.app.setFragmentResult
 import com.andresport.app_inventory.R
-import com.andresport.app_inventory.repository.ProductRepository
-import com.andresport.app_inventory.viewmodel.EditProductViewModel
-// import com.andresport.app_inventory.viewmodel.ViewModelFactory <-- ELIMINADO
+import com.andresport.app_inventory.viewmodel.ProductViewModel
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class EditProductFragment : Fragment(R.layout.fragment_edit_product) {
-    private var productId: String? = null // variable local para guardar el ID del producto
-    private val viewModel: EditProductViewModel by viewModels () // aqui ya no se usa factory porque hilt inyecta automaticamente
+
+    private var productId: String? = null
+
+
+    private val viewModel: ProductViewModel by viewModels()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         productId = arguments?.getString("productRef")
 
         if (productId.isNullOrBlank()) {
             Toast.makeText(requireContext(), "Error: No se pudo obtener la referencia del producto", Toast.LENGTH_LONG).show()
-            findNavController().popBackStack() // Regresa a la pantalla anterior si no hay ID
+            findNavController().popBackStack()
             return
         }
 
-        // CRITERIO 1: Toolbar - Botón de retroceso
         val returnIc = view.findViewById<ImageView>(R.id.returnIc)
-        returnIc.setOnClickListener {
-            findNavController().popBackStack() // Regresa a la pantalla anterior
-        }
-
-        // CRITERIO 2: ID no editable
         val tvProductValue = view.findViewById<TextView>(R.id.tvProductIdValue)
-        tvProductValue.text = productId
-
-        // CRITERIO 3: Campos
         val etName = view.findViewById<TextInputEditText>(R.id.etName)
         val etPrice = view.findViewById<TextInputEditText>(R.id.etPrice)
         val etQuantity = view.findViewById<TextInputEditText>(R.id.etQuantity)
         val btnSaveChanges = view.findViewById<Button>(R.id.btnSaveChanges)
 
-        // CRITERIO 5: Habilitar botón solo si TODOS los campos tienen texto
-        val textWatcher = object : TextWatcher {
+        tvProductValue.text = productId
+
+        returnIc.setOnClickListener { findNavController().popBackStack() }
+
+        // -------------------- Habilitar botón si todos los campos están llenos --------------------
+        val watcher = object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                val nameNotEmpty = etName.text?.isNotBlank() == true
-                val priceNotEmpty = etPrice.text?.isNotBlank() == true
-                val quantityNotEmpty = etQuantity.text?.isNotBlank() == true
-
-                btnSaveChanges.isEnabled = nameNotEmpty && priceNotEmpty && quantityNotEmpty
+                btnSaveChanges.isEnabled =
+                    etName.text?.isNotBlank() == true &&
+                            etPrice.text?.isNotBlank() == true &&
+                            etQuantity.text?.isNotBlank() == true
             }
         }
 
-        etName.addTextChangedListener(textWatcher)
-        etPrice.addTextChangedListener(textWatcher)
-        etQuantity.addTextChangedListener(textWatcher)
+        etName.addTextChangedListener(watcher)
+        etPrice.addTextChangedListener(watcher)
+        etQuantity.addTextChangedListener(watcher)
 
-        // Observar y rellenar campos desde BD
-        viewModel.product.observe(viewLifecycleOwner, Observer { product ->
+        // -------------------- Obtener producto --------------------
+        viewModel.selectedProduct.observe(viewLifecycleOwner) { product ->
             product?.let {
                 etName.setText(it.productName)
                 etPrice.setText(it.unitPrice.toString())
                 etQuantity.setText(it.stock.toString())
             } ?: run {
-                Toast.makeText(requireContext(), "Producto no encontrado en la base de datos", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Producto no encontrado", Toast.LENGTH_SHORT).show()
                 findNavController().popBackStack()
             }
-        })
+        }
 
-        // CRITERIO 4: Guardar cambios se hace el UPDATE en la  BD
+        // cargar desde DB
+        viewModel.loadProductByRef(productId!!)
+
+        // -------------------- Guardar cambios --------------------
         btnSaveChanges.setOnClickListener {
-            val newName = etName.text.toString().trim()
-            val newPriceStr = etPrice.text.toString().trim()
-            val newQuantityStr = etQuantity.text.toString().trim()
-            val newPrice = newPriceStr.toDoubleOrNull()
-            val newQuantity = newQuantityStr.toLongOrNull()
+            val name = etName.text.toString().trim()
+            val price = etPrice.text.toString().toDoubleOrNull()
+            val quantity = etQuantity.text.toString().toLongOrNull()
 
-            if (newPrice == null || newQuantity == null || newPrice <= 0 || newQuantity < 0) {
-                Toast.makeText(requireContext(), "Precio y cantidad deben ser números válidos", Toast.LENGTH_SHORT).show()
+            if (name.isBlank() || price == null || quantity == null || price <= 0 || quantity < 0) {
+                Toast.makeText(requireContext(), "Ingrese valores válidos", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // Actualizar en BD
-            viewModel.updateProduct(productId!!, newName, newPrice, newQuantity)
-
-            Toast.makeText(requireContext(), "Producto actualizado", Toast.LENGTH_SHORT).show()
-            findNavController().navigate(R.id.action_editProductFragment_to_inventarioFragment)
+            viewModel.updateProductFields(productId!!, name, price, quantity) { success, msg ->
+                if (success) {
+                    Toast.makeText(requireContext(), "Producto actualizado", Toast.LENGTH_SHORT).show()
+                    findNavController().navigate(R.id.action_editProductFragment_to_inventarioFragment)
+                } else {
+                    Toast.makeText(requireContext(), msg ?: "Error al actualizar", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
-
-        // Cargar producto desde BD
-        viewModel.loadProduct(productId!!)
     }
 }

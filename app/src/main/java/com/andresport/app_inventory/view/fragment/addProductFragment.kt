@@ -11,7 +11,7 @@ import android.widget.Toast
 import androidx.navigation.fragment.findNavController
 import com.andresport.app_inventory.R
 import com.andresport.app_inventory.model.Product
-import com.andresport.app_inventory.viewmodel.AddProductViewModel
+import com.andresport.app_inventory.viewmodel.ProductViewModel   // 🟢 ← Cambiado
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -25,7 +25,8 @@ class AddProductFragment : Fragment() {
     private lateinit var saveBtn: android.widget.Button
     private lateinit var returnIc: ImageView
 
-    private val viewModel: AddProductViewModel by viewModels()
+    // 🟢 Se usa el único ViewModel ahora
+    private val viewModel: ProductViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -46,8 +47,8 @@ class AddProductFragment : Fragment() {
 
         returnIc.setOnClickListener { returnInventoryPage() }
 
-        // Validación
-        val textWatcher = object : android.text.TextWatcher {
+        // Habilitar botón solo si todos los campos tienen texto
+        val watcher = object : android.text.TextWatcher {
             override fun afterTextChanged(s: android.text.Editable?) {
                 saveBtn.isEnabled =
                     productRefTIET.text!!.isNotEmpty() &&
@@ -55,15 +56,14 @@ class AddProductFragment : Fragment() {
                             unitPriceTIET.text!!.isNotEmpty() &&
                             stockTIET.text!!.isNotEmpty()
             }
-
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         }
 
-        productRefTIET.addTextChangedListener(textWatcher)
-        productNameTIET.addTextChangedListener(textWatcher)
-        unitPriceTIET.addTextChangedListener(textWatcher)
-        stockTIET.addTextChangedListener(textWatcher)
+        productRefTIET.addTextChangedListener(watcher)
+        productNameTIET.addTextChangedListener(watcher)
+        unitPriceTIET.addTextChangedListener(watcher)
+        stockTIET.addTextChangedListener(watcher)
 
         saveBtn.setOnClickListener { saveProduct() }
     }
@@ -77,19 +77,19 @@ class AddProductFragment : Fragment() {
             .toDoubleOrNull() ?: 0.0
         val stock = stockTIET.text.toString().toLongOrNull() ?: 0L
 
-        val product = Product(
-            productRef = ref,
-            productName = name,
-            unitPrice = price,
-            stock = stock
-        )
+        if (ref.isBlank() || name.isBlank() || price <= 0 || stock < 0) {
+            Toast.makeText(requireContext(), "Completa todos los campos correctamente", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-        viewModel.insertProduct(product) { success, errorMessage ->
+        val product = Product(ref, name, price, stock)
+
+        viewModel.insertProduct(product) { success, message ->
             if (success) {
-                Toast.makeText(requireContext(), "Producto guardado correctamente", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Producto agregado", Toast.LENGTH_SHORT).show()
                 returnInventoryPage()
             } else {
-                Toast.makeText(requireContext(), "Error: $errorMessage", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), message ?: "Error inesperado", Toast.LENGTH_LONG).show()
             }
         }
     }
